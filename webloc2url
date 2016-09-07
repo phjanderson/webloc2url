@@ -1,0 +1,91 @@
+#!/usr/bin/php
+<?php
+/*
+Webloc to URL file converter
+by phjanderson
+
+Copyright 2016 phjanderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+if (!isset($argv[1])) {
+	print "Webloc to URL file converter\n";
+	print "\n";
+	print "Convert a single file:\n";
+	print "webloc2url link.webloc\n";
+	print "\n";
+	print "Convert all webloc files in the folder specified and all its sub folders:\n";
+	print "webloc2url folder_name\n";
+	print "\n";
+	print "Existing URL files with names identical to the webloc file names will NOT be overwritten.\n";
+	print "\n";
+	exit -1;
+}
+
+if (is_dir($argv[1])) {
+	recurseFolders($argv[1]);	
+} else {
+	convertFile($argv[1]);
+}
+
+function recurseFolders($foldername) {
+	$recursiveDirectoryIterator = new RecursiveDirectoryIterator($foldername);
+	$recursiveIteratorIterator = new RecursiveIteratorIterator($recursiveDirectoryIterator);
+	$regexIterator = new RegexIterator($recursiveIteratorIterator, '/\.webloc$/i');
+	foreach($regexIterator as $filename) {
+		print $filename;
+		print "\n";
+		convertFile($filename);
+	}
+}
+
+function convertFile($filename) {
+	if (!file_exists($filename)) {
+		print "Error: file '$filename' does not exist\n";
+		exit -2;
+	}
+
+	$xml = simplexml_load_file($filename);
+
+	if ($xml === false) {
+		print "Error: failed to parse '$filename'\n";
+		foreach(libxml_get_errors() as $error) {
+			print $error->message . "\n";
+		}
+		exit -3;
+	}
+
+	if (!$xml->dict || $xml->dict->key != 'URL') {
+		print "Error: failed to parse '$filename'\n";
+		print "/dict/key node value != URL";
+		exit -4;
+	}
+
+	$url = $xml->dict->string;
+
+
+	$urlFilename = preg_replace("/\\.webloc$/", ".url", $filename);
+	if (file_exists($urlFilename)) {
+		print "Warning: skippped '$filename', target file '$urlFilename' already exist\n";
+	} else {
+		$urlFileContent  = "[InternetShortcut]\r\n";
+		$urlFileContent .= "URL=$url\r\n";
+
+		if(!file_put_contents($urlFilename, $urlFileContent)) {
+			print "Error: failed to write URL file with filename '$urlFilename'\n";
+			print "/dict/key node value != URL";
+			exit -5;
+		}
+	}
+}
