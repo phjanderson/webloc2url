@@ -1,6 +1,22 @@
 Webloc to URL file converter
 by phjanderson
 
+Convert webloc URL bookmark files created on OS X to the Windows URL file format which can be used on most platforms (including OS X).
+
+------
+
+Usage:
+
+Convert a single file:
+webloc2url link.webloc
+
+Convert all webloc files in the folder specified and all its sub folders:
+webloc2url folder_name
+
+Existing URL files with names identical to the webloc file names will NOT be overwritten.
+
+---
+
 Copyright 2016 phjanderson
 
    Licensed under the Apache License, Version 2.0 (the "License");
